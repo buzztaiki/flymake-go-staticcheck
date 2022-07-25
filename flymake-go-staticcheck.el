@@ -46,6 +46,12 @@
           (repeat string))
   :group 'flymake-go-staticcheck)
 
+(defcustom flymake-go-staticcheck-ignore-compile-error nil
+  "Ignore compile error report from staticcheck."
+  :type 'boolean
+  :group 'flymake-go-staticcheck)
+
+
 (defvar flymake-go-staticcheck--message-regex "^\\([^:]*\\):\\([0-9]+\\):\\([0-9]*\\):[[:space:]]*\\(.*\\)"
   "Internal variable.
 Regular expression definition to match staticcheck messages.")
@@ -74,8 +80,9 @@ Return a list of results."
                  (column (string-to-number (match-string 3)))
                  (msg (match-string 4))
                  (src-pos (flymake-diag-region source-buf lineno column)))
-            (if (string= (buffer-file-name source-buf)
-                         (expand-file-name filename))
+            (if (and (string= (buffer-file-name source-buf)
+                              (expand-file-name filename))
+                     (not (and flymake-go-staticcheck-ignore-compile-error (string-match-p "(compile)$" msg))))
                 (push (flymake-make-diagnostic source-buf
                                                (car src-pos)
                                                (min (buffer-size source-buf) (cdr src-pos))
